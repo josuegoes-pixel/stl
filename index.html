@@ -42,7 +42,10 @@ select,.toggle{background:var(--panel2);border:1px solid var(--line);color:var(-
 .copybtn.copied{background:#2ecc71}
 .open{flex:1;display:flex;align-items:center;justify-content:center;background:var(--panel2);padding:11px 8px;color:var(--accent);font-weight:600;font-size:12px;border-left:1px solid var(--line)}
 .open:hover{background:var(--panel2);color:#fff}
-.more{display:block;margin:22px auto;padding:11px 22px;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;cursor:pointer}
+.loadwrap{display:flex;justify-content:center;align-items:center;min-height:60px}
+.spin{display:none;width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:rot .7s linear infinite}
+.loadwrap.on .spin{display:block}
+@keyframes rot{to{transform:rotate(360deg)}}
 .empty{color:var(--mut);padding:40px;text-align:center}
 </style></head>
 <body>
@@ -65,7 +68,7 @@ select,.toggle{background:var(--panel2);border:1px solid var(--line);color:var(-
 </div>
 <div class="grid" id="grid"></div>
 <div class="empty" id="empty" style="display:none">Nenhum modelo encontrado.</div>
-<button class="more" id="more" style="display:none">Carregar mais</button>
+<div class="loadwrap" id="loadwrap"><span class="spin"></span></div>
 </main>
 </div>
 <script>
@@ -119,7 +122,7 @@ function render(reset){
     '<a class="open" href="'+PROD+it.s+'" target="_blank" rel="noopener">Abrir ↗</a></div></div>';
   }).join('');
   document.getElementById('empty').style.display=r.length?'none':'block';
-  document.getElementById('more').style.display=r.length>slice.length?'block':'none';
+  hasMore=r.length>slice.length;
 }
 document.getElementById('grid').addEventListener('click',e=>{
   const b=e.target.closest('.copybtn');if(!b)return;
@@ -135,7 +138,14 @@ fDiff.addEventListener('change',e=>{state.diff=e.target.value;state.page=1;rende
 fTime.addEventListener('change',e=>{state.time=e.target.value;state.page=1;render(true);});
 fMp.addEventListener('change',e=>{state.mp=e.target.checked;state.page=1;render(true);});
 fSort.addEventListener('change',e=>{state.sort=e.target.value;state.page=1;render(true);});
-document.getElementById('more').addEventListener('click',()=>{state.page++;render(true);});
+// scroll infinito
+let hasMore=false,loading=false;
+const lw=document.getElementById('loadwrap');
+new IntersectionObserver(es=>{
+  if(!es[0].isIntersecting||!hasMore||loading)return;
+  loading=true;lw.classList.add('on');
+  setTimeout(()=>{state.page++;render(true);loading=false;lw.classList.remove('on');},400);
+},{rootMargin:'300px'}).observe(lw);
 render(true);
 </script>
 </body></html>
