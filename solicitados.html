@@ -27,6 +27,8 @@ h1{font-size:22px;margin:0 0 4px}
 .tag{background:var(--chip);color:var(--mut);font-size:10px;padding:3px 8px;border-radius:20px}
 .tag.pend{color:#f1c40f}
 .tag.ok{color:var(--ok)}
+.tag.who{color:var(--accent)}
+.wait{flex:1;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:12px;padding:11px 8px}
 .cfoot{display:flex;border-top:1px solid var(--line)}
 .abtn{flex:1;border:none;padding:11px 8px;cursor:pointer;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--accent);color:#fff}
 .abtn:hover{filter:brightness(1.12)}
@@ -56,6 +58,7 @@ h1{font-size:22px;margin:0 0 4px}
 <header>
 <div class="logo">STL<span>FLIX</span> · solicitados</div>
 <a class="navlink" href="index.html">Voltar ao catálogo</a>
+<button class="navlink" id="logoutbtn" style="cursor:pointer;margin-left:10px">Sair</button>
 </header>
 <main>
 <h1>Itens solicitados</h1>
@@ -78,11 +81,13 @@ h1{font-size:22px;margin:0 0 4px}
 </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SB_URL="https://thkrqqzofjquzlyuytaa.supabase.co", SB_KEY="sb_publishable_wUY-5yzykhXqAwbrkidEHw_v2tXqPlD";
-const SB_ON=!SB_URL.startsWith('__');
-const sb=(p,opt={})=>fetch(SB_URL+'/rest/v1/'+p,{...opt,headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',...(opt.headers||{})}});
-let ROWS=[];
+const ADMIN_EMAIL="josue.jobs93@gmail.com";
+const sbc=window.supabase.createClient(SB_URL,SB_KEY);
+let ROWS=[],USER=null,IS_ADMIN=false;
+document.getElementById('logoutbtn').onclick=async()=>{try{await sbc.auth.signOut();}catch(e){}location.href='index.html';};
 function dayLabel(d){
   const dt=new Date(d),now=new Date();
   const day=x=>new Date(x.getFullYear(),x.getMonth(),x.getDate()).getTime();
@@ -98,11 +103,15 @@ function cardHTML(r){
   '<div class="thumb" style="background-image:url(\''+esc(r.img)+'\')"></div>'+
   '<div class="cbody"><div class="cname">'+esc(r.name)+'</div>'+
   '<div class="meta"><span class="tag">'+esc(r.cat)+'</span>'+
+  (IS_ADMIN&&(r.user_name||r.user_email)?'<span class="tag who">'+esc(r.user_name||r.user_email)+'</span>':'')+
   '<span class="tag '+(pend?'pend':'ok')+'">'+(pend?'Pendente':'Com link')+'</span>'+
   '<span class="tag">'+new Date(r.requested_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'</span></div></div>'+
   '<div class="cfoot">'+
-  (pend?'<button class="abtn" data-act="add">Adicionar link do Drive</button>'
-       :'<button class="abtn dl" data-act="dl">Download</button><button class="abtn edit" data-act="add" title="Editar link">Editar</button>')+
+  (IS_ADMIN
+    ?(pend?'<button class="abtn" data-act="add">Adicionar link do Drive</button>'
+          :'<button class="abtn dl" data-act="dl">Download</button><button class="abtn edit" data-act="add" title="Editar link">Editar</button>')
+    :(pend?'<div class="wait">Aguardando link do administrador...</div>'
+          :'<button class="abtn dl" data-act="dl">Baixar STL</button>'))+
   '<a class="openlink" href="'+esc(r.link)+'" target="_blank" rel="noopener" title="Ver no STLFLIX">Ver</a>'+
   '</div></div>';
 }
@@ -127,13 +136,21 @@ function renderAll(){
   }
   c.innerHTML=html;
   const total=ROWS.length,pend=ROWS.filter(r=>!r.drive_url).length;
-  document.getElementById('sub').textContent=total+' solicitação(ões) · '+pend+' pendente(s) · '+(total-pend)+' com link';
+  document.getElementById('sub').textContent=(IS_ADMIN?'Administrador · ':'Suas solicitações · ')+total+' solicitação(ões) · '+pend+' pendente(s) · '+(total-pend)+' com link';
 }
 async function load(){
-  if(!SB_ON){document.getElementById('content').innerHTML='<div class="err">Backend ainda não configurado.</div>';return;}
   try{
-    const r=await sb('requests?select=*&order=requested_at.desc');
-    ROWS=await r.json();
+    const {data:s}=await sbc.auth.getSession();
+    USER=s.session?s.session.user:null;
+  }catch(e){USER=null;}
+  if(!USER){location.href='login.html';return;}
+  IS_ADMIN=USER.email===ADMIN_EMAIL;
+  try{
+    let q=sbc.from('requests').select('*').order('requested_at',{ascending:false});
+    if(!IS_ADMIN)q=q.eq('user_id',USER.id);
+    const {data,error}=await q;
+    if(error)throw error;
+    ROWS=data||[];
     renderAll();
   }catch(e){document.getElementById('content').innerHTML='<div class="err">Erro ao carregar. Recarregue a página.</div>';}
 }
@@ -152,8 +169,8 @@ cf.onclick=async()=>{
   if(!/^https?:\/\/.+/.test(url)){inp.style.borderColor='#e74c3c';return;}
   inp.style.borderColor='var(--line)';cf.disabled=true;cf.textContent='Salvando...';
   try{
-    const r=await sb('requests?slug=eq.'+encodeURIComponent(cur.slug),{method:'PATCH',body:JSON.stringify({drive_url:url,status:'atendido'})});
-    if(!r.ok)throw 0;
+    const {error}=await sbc.from('requests').update({drive_url:url,status:'atendido',seen:false}).eq('slug',cur.slug);
+    if(error)throw error;
     cur.drive_url=url;cur.status='atendido';
     ok.classList.add('on');
     setTimeout(()=>{ov.classList.remove('on');renderAll();},900);

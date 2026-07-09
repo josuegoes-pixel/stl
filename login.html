@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entrar — Catálogo STLFLIX</title>
+<style>
+:root{--bg:#0d0e12;--panel:#15171e;--panel2:#1c1f28;--line:#262a35;--txt:#e8eaf0;--mut:#8b90a0;--accent:#6c5ce7;--err:#e74c3c;--ok:#2ecc71;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,Segoe UI,system-ui,Arial,sans-serif;font-size:14px;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:30px;width:min(400px,92vw)}
+.logo{font-weight:800;font-size:22px;text-align:center;margin-bottom:6px}
+.logo span{color:var(--accent)}
+.sub{color:var(--mut);text-align:center;margin-bottom:22px;font-size:13px}
+.tabs{display:flex;background:var(--panel2);border-radius:10px;padding:4px;margin-bottom:20px}
+.tab{flex:1;border:none;background:none;color:var(--mut);padding:9px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer}
+.tab.on{background:var(--accent);color:#fff}
+label{display:block;font-size:12px;color:var(--mut);font-weight:600;margin:12px 0 5px}
+input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:12px;color:var(--txt);font-size:14px;outline:none}
+input:focus{border-color:var(--accent)}
+.btn{width:100%;margin-top:20px;background:var(--accent);border:none;color:#fff;padding:13px;border-radius:9px;font-weight:800;font-size:14px;cursor:pointer}
+.btn:hover{background:#8577ee}
+.btn:disabled{opacity:.6}
+.msg{margin-top:14px;font-size:13px;text-align:center;display:none}
+.msg.err{color:var(--err);display:block}
+.msg.ok{color:var(--ok);display:block}
+.back{display:block;text-align:center;margin-top:16px;color:var(--mut);font-size:13px;text-decoration:none}
+.back:hover{color:var(--accent)}
+#fname{display:none}
+</style></head>
+<body>
+<div class="box">
+<div class="logo">STL<span>FLIX</span> · catálogo</div>
+<div class="sub">Entre para solicitar e acompanhar seus STLs</div>
+<div class="tabs">
+<button class="tab on" id="tlogin">Entrar</button>
+<button class="tab" id="tsignup">Cadastrar</button>
+</div>
+<div id="fname"><label>Nome</label><input id="name" type="text" placeholder="Seu nome"></div>
+<label>E-mail</label><input id="email" type="email" placeholder="voce@email.com">
+<label>Senha</label><input id="pass" type="password" placeholder="Mínimo 6 caracteres">
+<button class="btn" id="go">Entrar</button>
+<div class="msg" id="msg"></div>
+<a class="back" href="index.html">Voltar ao catálogo</a>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const sbc=window.supabase.createClient("https://thkrqqzofjquzlyuytaa.supabase.co","sb_publishable_wUY-5yzykhXqAwbrkidEHw_v2tXqPlD");
+let MODE='login';
+const $=id=>document.getElementById(id);
+function setMode(m){MODE=m;$('tlogin').classList.toggle('on',m==='login');$('tsignup').classList.toggle('on',m==='signup');
+$('fname').style.display=m==='signup'?'block':'none';$('go').textContent=m==='login'?'Entrar':'Criar conta';$('msg').className='msg';}
+$('tlogin').onclick=()=>setMode('login');
+$('tsignup').onclick=()=>setMode('signup');
+function fail(t){const m=$('msg');m.textContent=t;m.className='msg err';$('go').disabled=false;$('go').textContent=MODE==='login'?'Entrar':'Criar conta';}
+$('go').onclick=async()=>{
+  const email=$('email').value.trim(),pass=$('pass').value,name=$('name').value.trim();
+  if(!/.+@.+\..+/.test(email))return fail('E-mail inválido.');
+  if(pass.length<6)return fail('A senha precisa de pelo menos 6 caracteres.');
+  if(MODE==='signup'&&!name)return fail('Digite seu nome.');
+  $('go').disabled=true;$('go').textContent='Aguarde...';
+  try{
+    let r;
+    if(MODE==='signup'){
+      r=await sbc.auth.signUp({email,password:pass,options:{data:{name}}});
+      if(r.error)throw r.error;
+      if(!r.data.session){r=await sbc.auth.signInWithPassword({email,password:pass});if(r.error)throw r.error;}
+    }else{
+      r=await sbc.auth.signInWithPassword({email,password:pass});
+      if(r.error)throw r.error;
+    }
+    const m=$('msg');m.textContent='Tudo certo! Redirecionando...';m.className='msg ok';
+    setTimeout(()=>location.href='index.html',600);
+  }catch(e){
+    const t=(e&&e.message)||'';
+    if(/already registered/i.test(t))fail('Este e-mail já está cadastrado. Use a aba Entrar.');
+    else if(/invalid login/i.test(t))fail('E-mail ou senha incorretos.');
+    else fail('Erro: '+t);
+  }
+};
+$('pass').addEventListener('keydown',e=>{if(e.key==='Enter')$('go').click();});
+sbc.auth.getSession().then(({data})=>{if(data.session)location.href='index.html';});
+</script>
+</body></html>
