@@ -36,8 +36,12 @@ select,.toggle{background:var(--panel2);border:1px solid var(--line);color:var(-
 .cname{font-weight:600;font-size:13px;line-height:1.3;min-height:34px}
 .ctags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .tag{background:var(--chip);color:var(--mut);font-size:10px;padding:3px 7px;border-radius:20px;white-space:nowrap}
-.open{display:block;text-align:center;background:var(--panel2);border-top:1px solid var(--line);padding:8px;color:var(--accent);font-weight:600;font-size:12px}
-.open:hover{background:var(--accent);color:#fff}
+.cfoot{display:flex;border-top:1px solid var(--line)}
+.copybtn{flex:1.5;background:var(--accent);border:none;color:#fff;padding:11px 8px;cursor:pointer;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s}
+.copybtn:hover{background:#8577ee}
+.copybtn.copied{background:#2ecc71}
+.open{flex:1;display:flex;align-items:center;justify-content:center;background:var(--panel2);padding:11px 8px;color:var(--accent);font-weight:600;font-size:12px;border-left:1px solid var(--line)}
+.open:hover{background:var(--panel2);color:#fff}
 .more{display:block;margin:22px auto;padding:11px 22px;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;cursor:pointer}
 .empty{color:var(--mut);padding:40px;text-align:center}
 </style></head>
@@ -106,11 +110,19 @@ function render(reset){
     const img=D.PFX+it.i;
     return '<div class="card"><div class="thumb" style="background-image:url(\''+img+'\')">'+(it.m?'<span class="mpflag">Multiparts</span>':'')+'</div>'+
     '<div class="cbody"><div class="cname">'+it.n+'</div><div class="ctags">'+tagList(it).map(t=>'<span class="tag">'+t+'</span>').join('')+'</div></div>'+
-    '<a class="open" href="'+PROD+it.s+'" target="_blank" rel="noopener">Abrir no STLFLIX ↗</a></div>';
+    '<div class="cfoot"><button class="copybtn" data-link="'+PROD+it.s+'" title="Copiar link do modelo">⧉ Copiar link</button>'+
+    '<a class="open" href="'+PROD+it.s+'" target="_blank" rel="noopener">Abrir ↗</a></div></div>';
   }).join('');
   document.getElementById('empty').style.display=r.length?'none':'block';
   document.getElementById('more').style.display=r.length>slice.length?'block':'none';
 }
+document.getElementById('grid').addEventListener('click',e=>{
+  const b=e.target.closest('.copybtn');if(!b)return;
+  const link=b.dataset.link;
+  const done=()=>{b.textContent='✓ Copiado!';b.classList.add('copied');setTimeout(()=>{b.textContent='⧉ Copiar link';b.classList.remove('copied');},1400);};
+  if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(link).then(done);}
+  else{const t=document.createElement('textarea');t.value=link;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);done();}
+});
 document.getElementById('side').addEventListener('click',e=>{const c=e.target.closest('.cat');if(!c)return;document.querySelectorAll('.cat').forEach(x=>x.classList.remove('active'));c.classList.add('active');state.cat=+c.dataset.cat;state.page=1;document.getElementById('title').textContent=state.cat<0?'Todos os modelos':D.CATS[state.cat];render(true);});
 q.addEventListener('input',e=>{state.q=e.target.value.toLowerCase();state.page=1;render(true);});
 fPrinter.addEventListener('change',e=>{state.printer=e.target.value;state.page=1;render(true);});
