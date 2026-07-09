@@ -104,11 +104,12 @@ const D ={"CATS":["Household","Toys","Art","Seasonal","Miniatures","Multiparts",
 const PROD = "https://platform.stlflix.com/product/";
 // ---- backend de solicitações (Supabase + Auth) ----
 const SB_URL="https://thkrqqzofjquzlyuytaa.supabase.co", SB_KEY="sb_publishable_wUY-5yzykhXqAwbrkidEHw_v2tXqPlD";
-const ADMIN_EMAIL="josue.jobs93@gmail.com";
+const ADMIN_EMAIL="josuegoes@gmail.com";
 const sbc=window.supabase.createClient(SB_URL,SB_KEY);
 let REQ={},USER=null,IS_ADMIN=false;
 async function initAuth(){
   try{const {data}=await sbc.auth.getSession();USER=data.session?data.session.user:null;}catch(e){USER=null;}
+  if(!USER){location.replace('login.html');return;}
   IS_ADMIN=!!USER&&USER.email===ADMIN_EMAIL;
   document.getElementById('loginlink').style.display=USER?'none':'flex';
   document.getElementById('userbox').style.display=USER?'flex':'none';

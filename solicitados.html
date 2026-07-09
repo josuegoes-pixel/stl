@@ -84,7 +84,7 @@ h1{font-size:22px;margin:0 0 4px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SB_URL="https://thkrqqzofjquzlyuytaa.supabase.co", SB_KEY="sb_publishable_wUY-5yzykhXqAwbrkidEHw_v2tXqPlD";
-const ADMIN_EMAIL="josue.jobs93@gmail.com";
+const ADMIN_EMAIL="josuegoes@gmail.com";
 const sbc=window.supabase.createClient(SB_URL,SB_KEY);
 let ROWS=[],USER=null,IS_ADMIN=false;
 document.getElementById('logoutbtn').onclick=async()=>{try{await sbc.auth.signOut();}catch(e){}location.href='index.html';};
