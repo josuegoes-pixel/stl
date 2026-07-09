@@ -31,9 +31,9 @@ h1{font-size:22px;margin:0 0 4px}
 .abtn{flex:1;border:none;padding:11px 8px;cursor:pointer;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--accent);color:#fff}
 .abtn:hover{filter:brightness(1.12)}
 .abtn.dl{background:var(--ok)}
-.abtn.edit{flex:0 0 46px;background:var(--panel2);color:var(--mut);border-left:1px solid var(--line)}
+.abtn.edit{flex:0 0 auto;padding:11px 14px;background:var(--panel2);color:var(--mut);border-left:1px solid var(--line)}
 .abtn.edit:hover{color:var(--txt)}
-.openlink{flex:0 0 46px;display:flex;align-items:center;justify-content:center;background:var(--panel2);color:var(--accent);border-left:1px solid var(--line);font-size:13px}
+.openlink{flex:0 0 auto;padding:0 14px;display:flex;align-items:center;justify-content:center;background:var(--panel2);color:var(--accent);border-left:1px solid var(--line);font-size:13px}
 .empty,.loading{color:var(--mut);padding:60px;text-align:center}
 .err{color:#e74c3c;padding:40px;text-align:center}
 /* modal */
@@ -55,7 +55,7 @@ h1{font-size:22px;margin:0 0 4px}
 <body>
 <header>
 <div class="logo">STL<span>FLIX</span> · solicitados</div>
-<a class="navlink" href="index.html">← Voltar ao catálogo</a>
+<a class="navlink" href="index.html">Voltar ao catálogo</a>
 </header>
 <main>
 <h1>Itens solicitados</h1>
@@ -70,7 +70,7 @@ h1{font-size:22px;margin:0 0 4px}
 <h3>Adicionar link do Drive</h3>
 <div class="mname" id="mname"></div>
 <input id="minput" type="url" placeholder="https://drive.google.com/...">
-<div class="msuccess" id="msuccess">✓ Link adicionado com sucesso!</div>
+<div class="msuccess" id="msuccess">Link adicionado com sucesso!</div>
 <div class="mbtns">
 <button class="mbtn cancel" id="mcancel">Cancelar</button>
 <button class="mbtn confirm" id="mconfirm">Confirmar</button>
@@ -98,18 +98,18 @@ function cardHTML(r){
   '<div class="thumb" style="background-image:url(\''+esc(r.img)+'\')"></div>'+
   '<div class="cbody"><div class="cname">'+esc(r.name)+'</div>'+
   '<div class="meta"><span class="tag">'+esc(r.cat)+'</span>'+
-  '<span class="tag '+(pend?'pend':'ok')+'">'+(pend?'⏳ Pendente':'✓ Com link')+'</span>'+
+  '<span class="tag '+(pend?'pend':'ok')+'">'+(pend?'Pendente':'Com link')+'</span>'+
   '<span class="tag">'+new Date(r.requested_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'</span></div></div>'+
   '<div class="cfoot">'+
-  (pend?'<button class="abtn" data-act="add">🔗 Adicionar link do Drive</button>'
-       :'<button class="abtn dl" data-act="dl">⬇ Download</button><button class="abtn edit" data-act="add" title="Editar link">✎</button>')+
-  '<a class="openlink" href="'+esc(r.link)+'" target="_blank" rel="noopener" title="Ver no STLFLIX">↗</a>'+
+  (pend?'<button class="abtn" data-act="add">Adicionar link do Drive</button>'
+       :'<button class="abtn dl" data-act="dl">Download</button><button class="abtn edit" data-act="add" title="Editar link">Editar</button>')+
+  '<a class="openlink" href="'+esc(r.link)+'" target="_blank" rel="noopener" title="Ver no STLFLIX">Ver</a>'+
   '</div></div>';
 }
 let FILTER='';
 function renderAll(){
   const c=document.getElementById('content');
-  if(!ROWS.length){c.innerHTML='<div class="empty">Nenhuma solicitação ainda. Volte ao catálogo e clique em ➕ Solicitar.</div>';return;}
+  if(!ROWS.length){c.innerHTML='<div class="empty">Nenhuma solicitação ainda. Volte ao catálogo e clique em Solicitar.</div>';return;}
   const vis=FILTER?ROWS.filter(r=>(r.name+' '+(r.cat||'')).toLowerCase().includes(FILTER)):ROWS;
   if(!vis.length){c.innerHTML='<div class="empty">Nada encontrado para "'+esc(FILTER)+'".</div>';return;}
   const days={};
